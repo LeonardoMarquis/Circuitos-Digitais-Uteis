@@ -94,7 +94,7 @@ void loop() {
       estado = 1;
     }
 
-    else if (estado == 1) {     // pra receber o B
+    else if (estado == 1) {     // pra recebr B
       B = num;
       Serial.print("B = ");
       Serial.println(B);
@@ -111,14 +111,14 @@ void loop() {
   atualizarDisplay();
 
 
-  // para zerar tudo
+  // para zerar tud
   if (key == 'A'){
     apagar();
     resultado = 0;
     digitalWrite(ledOverflow, LOW); 
   }
 
-  // para dar um delay e nao ficar tiltando e fazer mais lag
+  // para dar um delay e nao ficar tiltando e dando  lag
   delay(50);
 }
 
@@ -130,7 +130,7 @@ void loop() {
 
 
 void calcularSomaBinaria() {
-  if (B > A) {                  // fazer a inversao se o A for menor
+  if (B > A) {                  // fazr a inversao se o A for menor
     int temp = A;
     A = B;
     B = temp;
@@ -142,7 +142,7 @@ void calcularSomaBinaria() {
   int bitsB[5] = {0};   // vetor de 4 bitas para o B
 
   for (int i = 0; i < 5; i++) {
-    bitsA[i] = (A >> i) & 1;
+    bitsA[i] = (A >> i) & 1;    
     bitsB[i] = (B >> i) & 1;
   }
 
@@ -150,17 +150,23 @@ void calcularSomaBinaria() {
   int carry = 0;
 
   for (int i = 0; i < 5; i++) {
-    int total = bitsA[i] + bitsB[i] + carry;
-    soma[i] = total % 2;
-    carry = total / 2;
-  }
+    int total = bitsA[i] + bitsB[i] + carry;            // é em bit por bit, simula a soma das colunas da direita para a esqudrd
+    soma[i] = total % 2;                        // soma[i] sera o resto por 2 na divisao inteira, 
+                                                //ex: 0%2 da 0 0carry, e 1%2 da 1 0carry, 2%2 da 0 1carry, e 3%2 da 1 1carry | é o jeto para ter so 1 ou 0 aqui
+    carry = total / 2;                                  // guarda o vai 1 caso a soma passar de 1, no caso se ela der 2 ou 3
+  }                                                     
+                                                        // preenche -----> da esq para a direit
+                                                    // total pode ser 0 1 2 3
+                                                    // 
+
   soma[5] = carry;      // ultima posicao a esquerda, é o carry
 
   resultado = 0;
   for (int i = 0; i < 6; i++) {
-    if (soma[i]) {
-      resultado += (1 << i);
-    }
+    if (soma[i]) {                  // desloca o i para a esquerda i vezes
+      resultado += (1 << i);            // e como fazer 2^i so que apenas com os que soma[i] for 1
+    }                                   // no meu vetor soma[] é [5]    [4]     [3]     [2]     [1]   [0]
+                                        //        so para o overflow     2^4    2^3     2^2     2^1   2^0
   }
 
  
@@ -170,7 +176,10 @@ void calcularSomaBinaria() {
  
   Serial.print("Resultado binário: ");
   for (int i = 5; i >= 0; i--) {
-    Serial.print(soma[i]);              // percorrer os 5 bits do resultado da soma
+    Serial.print(soma[i]);              // percorrer os 5 bits do resultado direito, da direta para a esquerda7
+                                        // imprime da esquerda para direita um numero que o comeco e na direita
+                                        // porque no caso eu guardo o num em binario de tras para frente
+                                        // <----------
   }
 
 
