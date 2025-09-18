@@ -100,7 +100,7 @@ void loop() {
       Serial.println(B);
 
 
-      calcularSomaBinaria();
+      calcularSubtracaoBinaria();
 
       estado = 0;
     }
@@ -110,9 +110,9 @@ void loop() {
 
   atualizarDisplay();
 
-
+  // obs: se clicar as outras teclas o sistema vai pensar que sao numeros
   // para zerar tud
-  if (key == 'A'){
+  if (key == 'A'){	
     apagar();
     resultado = 0;
     digitalWrite(ledOverflow, LOW); 
@@ -129,8 +129,7 @@ void loop() {
 
 
 
-
-void calcularSomaBinaria() {
+void calcularSubtracaoBinaria() {
   if (B > A) {                  // fazr a inversao se o A for menor
     int temp = A;
     A = B;
@@ -143,18 +142,31 @@ void calcularSomaBinaria() {
   int bitsB[5] = {0};   // vetor de 4 bitas para o B
 
   for (int i = 0; i < 5; i++) {
-    bitsA[i] = (A >> i) & 1;    
-    bitsB[i] = (B >> i) & 1;
+    bitsA[i] = (A >> i) & 1; // converte em bin deslocando 1bit para a direita, e divide por 2 a cad desloc   
+    bitsB[i] = (B >> i) & 1;  // o i é o numero a converter, o e o 1 faz pegar o mais a direita e juntos formam o numero em bin
   }
 
   int soma[6] = {0};    // vetor de 5 bits para guardar o numero e o overflow dele
   int carry = 0;
 
-  for (int i = 0; i < 5; i++) {
-    int total = bitsA[i] + bitsB[i] + carry;            // é em bit por bit, simula a soma das colunas da direita para a esqudrd
-    soma[i] = total % 2;                        // soma[i] sera o resto por 2 na divisao inteira, 
-                                                //ex: 0%2 da 0 0carry, e 1%2 da 1 0carry, 2%2 da 0 1carry, e 3%2 da 1 1carry | é o jeto para ter so 1 ou 0 aqui
-    carry = total / 2;                                  // guarda o vai 1 caso a soma passar de 1, no caso se ela der 2 ou 3
+  // total aqui em questao e o bit da vez
+  // 0-0=0, 0-1=1 e tem carry, 1-0=0, 1-1=0
+  for (int i = 0; i < 5; i++) {			// é em bit por bit, simula a subtracaa das colunas da direita para a esqudrd
+
+    int total = bitsA[i] - bitsB[i] - carry;  
+    
+    if (total < 0){    // estou certo de que ocorreu um pelo menos um 0-1, que gera um overflow!
+      total += 2;	// para ajustar o -1 para fica 1, porque foi 0-1
+      carry = 1;
+      
+    }
+    else{
+      carry = 0;	// se nao tev 0-1 nao tem carry
+    }
+    
+    soma[i] = total;
+
+    
   }                                                     
                                                         // preenche -----> da esq para a direit
                                                     // total pode ser 0 1 2 3

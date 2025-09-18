@@ -100,7 +100,7 @@ void loop() {
       Serial.println(B);
 
 
-      calcularSomaBinaria();
+      calcularSubtracaoC2Binaria();
 
       estado = 0;
     }
@@ -110,9 +110,9 @@ void loop() {
 
   atualizarDisplay();
 
-
+  // obs: se clicar as outras teclas o sistema vai pensar que sao numeros
   // para zerar tud
-  if (key == 'A'){
+  if (key == 'A'){	
     apagar();
     resultado = 0;
     digitalWrite(ledOverflow, LOW); 
@@ -129,8 +129,7 @@ void loop() {
 
 
 
-
-void calcularSomaBinaria() {
+void calcularSubtracaoC2Binaria() {
   if (B > A) {                  // fazr a inversao se o A for menor
     int temp = A;
     A = B;
@@ -143,28 +142,63 @@ void calcularSomaBinaria() {
   int bitsB[5] = {0};   // vetor de 4 bitas para o B
 
   for (int i = 0; i < 5; i++) {
-    bitsA[i] = (A >> i) & 1;    
-    bitsB[i] = (B >> i) & 1;
+    bitsA[i] = (A >> i) & 1; // converte em bin deslocando 1bit para a direita, e divide por 2 a cad desloc   
+    bitsB[i] = (B >> i) & 1;  // o i é o numero a converter, o e o 1 faz pegar o mais a direita e juntos formam o numero em bin
   }
 
-  int soma[6] = {0};    // vetor de 5 bits para guardar o numero e o overflow dele
-  int carry = 0;
 
+  
+  
+  //1 inverter o numero binario B, criar o complemento de 2 de B 
+  for (int i = 0; i < 5; i++){
+    if (bitsB[i] == 0){
+      bitsB[i] = 1;
+    }  
+    else{
+      bitsB[i] = 0;  
+    }
+  }
+  
+  
+  
+
+  //2 Somar o C(B) com o 00001, essa funcao e so para isso
+  int bitsConst[5] = {1,0,0,0}; // porque no vetor guarda ----> mas o numero é lido <------
+  
+  int soma1[5] = {0};
+  int carry1 = 0;
+  
   for (int i = 0; i < 5; i++) {
-    int total = bitsA[i] + bitsB[i] + carry;            // é em bit por bit, simula a soma das colunas da direita para a esqudrd
-    soma[i] = total % 2;                        // soma[i] sera o resto por 2 na divisao inteira, 
-                                                //ex: 0%2 da 0 0carry, e 1%2 da 1 0carry, 2%2 da 0 1carry, e 3%2 da 1 1carry | é o jeto para ter so 1 ou 0 aqui
-    carry = total / 2;                                  // guarda o vai 1 caso a soma passar de 1, no caso se ela der 2 ou 3
-  }                                                     
-                                                        // preenche -----> da esq para a direit
-                                                    // total pode ser 0 1 2 3
-                                                    // 
+    
+    int total = bitsB[i] + bitsConst[i] + carry1;	//simular cada coluna
+    soma1[i] = total % 2;	// soma[i] sera o resto por 2 na divisao inteira,
+    
+    carry1 = total / 2;			// guarda o vai 1 caso a soma passar de 1, no caso se ela der 2 ou 3
+  }
+  
+  soma1[5] = carry1;
 
-  soma[5] = carry;      // ultima posicao a esquerda, é o carry
+  
+  
+  
+  //3 Somar o resul de C(B) com o 0001 com o bitsA
+  
+  int soma2[5] = {0}; // vetor de 5 bits para guardar o numero e o overflow dele
+  int carry_soma2 = 0;
+  for (int i = 0; i < 5; i++) {
+    int total = bitsA[i] + soma1[i] + carry_soma2;  
+    
+    soma2[i] = total % 2;        // soma[i] sera o resto por 2 na divisao inteira,
+    carry_soma2 = total / 2;    // guarda o vai 1 caso a soma passar de 1, no caso se ela der 2 ou 3
+  }                                                     
+                                                        
+                                                     
+
+  soma2[5] = carry_soma2;      // ultima posicao a esquerda, é o carry
 
   resultado = 0;
-  for (int i = 0; i < 6; i++) {
-    if (soma[i]) {                  // desloca o i para a esquerda i vezes
+  for (int i = 0; i < 5; i++) {
+    if (soma2[i]) {                  // desloca o i para a esquerda i vezes
       resultado += (1 << i);            // e como fazer 2^i so que apenas com os que soma[i] for 1
     }                                   // no meu vetor soma[] é [5]    [4]     [3]     [2]     [1]   [0]
                                         //        so para o overflow     2^4    2^3     2^2     2^1   2^0
@@ -174,10 +208,12 @@ void calcularSomaBinaria() {
  
  
  
+  
+  
  
   Serial.print("Resultado binário: ");
   for (int i = 5; i >= 0; i--) {
-    Serial.print(soma[i]);              // percorrer os 5 bits do resultado direito, da direta para a esquerda7
+    Serial.print(soma2[i]);              // percorrer os 5 bits do resultado direito, da direta para a esquerda7
                                         // imprime da esquerda para direita um numero que o comeco e na direita
                                         // porque no caso eu guardo o num em binario de tras para frente
                                         // <----------
@@ -199,6 +235,8 @@ void calcularSomaBinaria() {
 
 
 
+
+
 // como esse display 7 segmentos é anodo, o low ascende e o high apaga
 // mas o led é normal mesmo
 void apagar(){
@@ -213,6 +251,7 @@ void apagar(){
 //como ele é display 7 segmentos anodo, low ascende
 // entao tem que trocar a definicao de segmentos acesos de
 // cada um deles cim o not, que ai vai dar o inverso
+// ascende de acordo
 void acenderDisplay(int numero) {
   for (int i = 0; i < 7; i++) {
     digitalWrite(segmentos[i], !numeros[numero][i]);
